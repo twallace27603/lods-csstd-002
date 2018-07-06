@@ -1,0 +1,244 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+  "parameters": {
+    "LabInstanceId": {
+      "type": "string",
+      "defaultValue": "12345abcxyz321"
+    }
+  },
+  "variables": {
+    "webAppName": "[concat('wa',parameters('LabInstanceId'))]",
+    "storageName": "[concat('sa',parameters('LabInstanceId'))]",
+    "sqlServerName": "[concat('sql',parameters('LabInstanceId'))]",
+    "sqlFirewallName": "[concat(variables('sqlServerName'),'/serviceFirewall')]",
+    "sqlDatabaseName": "[concat(variables('sqlServerName'),'/customers')]",
+    "mySQLServerName": "[concat('mysql',parameters('LabInstanceId'))]",
+    "cosmosDBName": "[concat('cdb',parameters('LabInstanceId'))]",
+    "searchName": "[concat('srch',parameters('LabInstanceId'))]",
+    "mySqlDatabaseName": "vendors",
+    "mySqlVersion": "5.6",
+    "mySqlSkuTier": "GeneralPurpose",
+    "mySqlSkuSize": "5120",
+    "mySqlSkuName": "GP_Gen4_2",
+    "mySqlDTU": "2",
+    "sqlPassword": "[concat('Pa55word',parameters('LabInstanceId'))]",
+    "sqlAdmin": "student"
+  },
+  "resources": [
+    {
+      "type": "Microsoft.DocumentDB/databaseAccounts",
+      "kind": "GlobalDocumentDB",
+      "name": "[variables('cosmosDBName')]",
+      "apiVersion": "2015-04-08",
+      "location": "[resourceGroup().location]",
+      "tags": {
+        "defaultExperience": "DocumentDB",
+        "DisplayName": "Document DB"
+      },
+      "scale": null,
+      "properties": {
+        "databaseAccountOfferType": "Standard",
+        "consistencyPolicy": {
+          "defaultConsistencyLevel": "Session",
+          "maxIntervalInSeconds": 5,
+          "maxStalenessPrefix": 100
+        },
+        "name": "[variables('cosmosDBName')]"
+      },
+      "dependsOn": [],
+      "tags": {
+        "displayName": "Cosmos DB"
+      }
+    },
+
+    {
+      "type": "Microsoft.Search/searchServices",
+      "sku": {
+        "name": "Basic"
+      },
+      "name": "[variables('searchName')]",
+      "apiVersion": "2015-08-19",
+      "location": "[resourceGroup().location]",
+      "scale": null,
+      "properties": {
+        "replicaCount": 1,
+        "partitionCount": 1,
+        "hostingMode": "Default"
+      },
+      "dependsOn": [],
+      "tags": {
+        "displayName": "Search Service"
+      }
+    },
+
+    {
+      "type": "Microsoft.Sql/servers",
+      "kind": "v12.0",
+      "name": "[variables('sqlServerName')]",
+      "apiVersion": "2015-05-01-preview",
+      "location": "[resourceGroup().location]",
+      "scale": null,
+      "properties": {
+        "administratorLogin": "[variables('sqlAdmin')]",
+        "administratorLoginPassword": "[variables('sqlPassword')]",
+
+        "version": "12.0"
+      },
+      "dependsOn": [],
+      "tags": {
+        "displayName": "SQL Server"
+      },
+      "resources": [
+        {
+          "type": "Microsoft.Sql/servers/firewallRules",
+          "kind": "v12.0",
+          "name": "[variables('sqlFirewallName')]",
+          "apiVersion": "2014-04-01-preview",
+          "location": "[resourceGroup().location]",
+          "scale": null,
+          "properties": {
+            "startIpAddress": "0.0.0.0",
+            "endIpAddress": "0.0.0.0"
+          },
+          "dependsOn": [
+            "[resourceId('Microsoft.Sql/servers', variables('sqlServerName'))]"
+          ]
+        },
+        {
+          "type": "Microsoft.Sql/servers/databases",
+          "kind": "v12.0,user",
+          "name": "[variables('sqlDatabaseName')]",
+          "apiVersion": "2014-04-01-preview",
+          "location": "[resourceGroup().location]",
+          "scale": null,
+          "tags": {
+            "displayName": "Azure SQL Database"
+          },
+          "properties": {
+            "edition": "Basic",
+            "serviceLevelObjective": "Basic",
+            "collation": "SQL_Latin1_General_CP1_CI_AS",
+            "maxSizeBytes": "2147483648",
+            "requestedServiceObjectiveId": "dd6d99bb-f193-4ec1-86f2-43d3bccbc49c",
+            "requestedServiceObjectiveName": "Basic",
+            "defaultSecondaryLocation": "West US",
+            "elasticPoolName": null,
+            "containmentState": 2,
+            "readScale": "Disabled",
+            "failoverGroupId": null,
+            "zoneRedundant": false,
+            "isUpgradeRequested": false
+          },
+          "dependsOn": [
+            "[resourceId('Microsoft.Sql/servers', variables('sqlServerName'))]"
+          ]
+        }
+      ]
+    },
+
+    {
+      "type": "Microsoft.Storage/storageAccounts",
+      "sku": {
+        "name": "Standard_LRS",
+        "tier": "Standard"
+      },
+      "kind": "StorageV2",
+      "name": "[variables('storageName')]",
+      "apiVersion": "2018-02-01",
+      "location": "[resourceGroup().location]",
+      "tags": {
+        "displayName": "Storage Account"
+      },
+      "scale": null,
+      "properties": {
+        "networkAcls": {
+          "bypass": "AzureServices",
+          "virtualNetworkRules": [],
+          "ipRules": [],
+          "defaultAction": "Allow"
+        },
+        "supportsHttpsTrafficOnly": false,
+        "encryption": {
+          "services": {
+            "file": {
+              "enabled": true
+            },
+            "blob": {
+              "enabled": true
+            }
+          },
+          "keySource": "Microsoft.Storage"
+        },
+        "accessTier": "Hot"
+      },
+      "dependsOn": []
+    },
+
+
+
+    {
+      "apiVersion": "2017-12-01-preview",
+      "kind": "",
+      "location": "[resourceGroup().location]",
+      "name": "[variables('mySQLServerName')]",
+      "tags": {
+        "displayName": "MySQL Server"
+      },
+      "properties": {
+        "version": "[variables('mysqlVersion')]",
+        "administratorLogin": "[variables('sqlAdmin')]",
+        "administratorLoginPassword": "[variables('sqlPassword')]",
+        "storageProfile": {
+          "storageMB": "[variables('mySqlSkuSize')]",
+          "backupRetentionDays": "7",
+          "geoRedundantBackup": "Disabled"
+        },
+        "sslEnforcement": "Disabled"
+      },
+      "sku": {
+        "name": "[variables('mysqlSkuName')]",
+        "tier": "[variables('mysqlSkuTier')]",
+        "capacity": "[variables('mysqlDTU')]",
+        "size": "[variables('mySqlSkuSize')]",
+        "family": "Gen4"
+      },
+      "type": "Microsoft.DBforMySQL/servers",
+      "resources": [
+        {
+          "type": "firewallrules",
+          "apiVersion": "2017-12-01-preview",
+          "dependsOn": [
+            "[concat('Microsoft.DBforMySQL/servers/', variables('mySQLServerName'),'/databases/' , variables('mySqlDatabaseName'))]",
+            "[concat('Microsoft.DBforMySQL/servers/', variables('mySQLServerName'))]"
+          ],
+          "location": "[resourceGroup().location]",
+          "name": "AllowAzureIPs",
+          "tags": {
+            "displayName": "MySQL Firewall"
+          },
+          "properties": {
+            "startIpAddress": "0.0.0.0",
+            "endIpAddress": "0.0.0.0"
+          }
+        },
+        {
+          "name": "[variables('mySqlDatabaseName')]",
+          "type": "databases",
+          "apiVersion": "2017-12-01-preview",
+          "tags": {
+            "displayName": "MySQL Database"
+          },
+          "properties": {
+            "charset": "utf8",
+            "collation": "utf8_general_ci"
+          },
+          "dependsOn": [
+            "[concat('Microsoft.DBforMySQL/servers/', variables('mySqlServerName'))]"
+          ]
+        }
+      ]
+    }
+
+  ]
+}
