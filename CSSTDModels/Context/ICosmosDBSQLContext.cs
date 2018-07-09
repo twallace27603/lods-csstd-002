@@ -7,7 +7,7 @@ using CSSTDModels;
 
 namespace CSSTDModels
 {
-    public interface ICosmosDBContext
+    public interface ICosmosDBSQLContext
     {
         string ConnectionString { get; set; }
         Task CreateCollection();

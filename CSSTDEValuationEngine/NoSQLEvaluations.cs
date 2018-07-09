@@ -9,13 +9,13 @@ namespace CSSTDEvaluation
     public class NoSQLEvaluationProcessor
     {
         private SampleData sampleData;
-        public NoSQLEvaluationProcessor(string baseFolder)
+        public NoSQLEvaluationProcessor(string baseFolder, string encryptionKey)
         {
             sampleData = new SampleData(baseFolder);
         }
         public NoSQLEvaluationProcessor() { }
 
-        public EvaluationResult<ProductDocument> CosmosDBUpload(ICosmosDBContext context)
+        public EvaluationResult<ProductDocument> CosmosDBSQLUpload(ICosmosDBSQLContext context)
         {
             var result = new EvaluationResult<ProductDocument>();
             var data = sampleData.ProductData();
@@ -32,7 +32,7 @@ namespace CSSTDEvaluation
 
             return result;
         }
-        public EvaluationResult<ProductDocument> CosmosDBDownload(ICosmosDBContext context)
+        public EvaluationResult<ProductDocument> CosmosDBSQLDownload(ICosmosDBSQLContext context)
         {
             var result = new EvaluationResult<ProductDocument>();
             try
@@ -49,41 +49,46 @@ namespace CSSTDEvaluation
             }
             return result;
         }
-        public EvaluationResult<ProductDocument> SearchIndex(ISearchContext context)
+
+        public EvaluationResult<ProductMention> CosmosDBTableUpload(ICosmosDBTableContext context)
         {
-            var result = new EvaluationResult<ProductDocument>();
+            var result = new EvaluationResult<ProductMention>();
             try
             {
-                context.CreateIndex();
-                result.Text = "Successfully created document search engine";
+                var data = sampleData.ProductMentionData();
+                context.CreateTable();
+                context.LoadMentions(data);
                 result.Code = 0;
+                result.Text = "Successfully uploaded table data to Cosmos DB account.";
             }
-            catch (Exception ex)
+            catch(Exception ex)
             {
                 result.Code = 2;
-                result.Text = $"There was an error building the product document search index: {ex.Message}";
+                result.Text = $"There was an error uploading table data: {ex.Message}";
             }
+
+
             return result;
         }
 
-        public EvaluationResult<ProductDocument> SearchDownload(ISearchContext context)
+        public EvaluationResult<ProductMention> CosmosDBTableDownload(ICosmosDBTableContext context)
         {
-            var result = new EvaluationResult<ProductDocument>();
+            var result = new EvaluationResult<ProductMention>();
             try
             {
-                result.Results = context.GetDocuments( "swimming");
-                result.Text = result.Results.Count>0 ? "Successfully performed search on product documents" : "No product documents were returned by the search.";
-                result.Code = 0;
-
+                result.Results = new List<ProductMention>(context.GetMentions());
+                result.Code = result.Results.Count > 0 ? 0 : 1;
+                result.Text = result.Code == 0 ? "Successfully downloaded table data from Cosmos DB account" :
+                    "There were no errors, but no records were returned from Cosmos DB table.";
             }
-            catch (Exception ex)
+            catch(Exception ex)
             {
                 result.Code = 2;
-                result.Text = $"There was an error downloading product document search results: {ex.Message}";
+                result.Text = $"There was an error retrieving tabular data from Cosmos DB: {ex.Message}";
             }
+
             return result;
         }
-
 
     }
 

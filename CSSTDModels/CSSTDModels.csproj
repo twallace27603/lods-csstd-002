@@ -41,11 +41,12 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="Context\ICosmosDBContext.cs" />
+    <Compile Include="Context\ICosmosDBSQLContext.cs" />
+    <Compile Include="Context\ICosmosDBTableContext.cs" />
     <Compile Include="Context\IMySQLContext.cs" />
-    <Compile Include="Context\ISearchContext.cs" />
     <Compile Include="Context\ISQLServerContext.cs" />
     <Compile Include="Context\IStorageContext.cs" />
+    <Compile Include="ProductMentions.cs" />
     <Compile Include="VendorData.cs" />
     <Compile Include="ProductDocument.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />

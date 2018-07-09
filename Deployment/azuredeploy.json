@@ -5,6 +5,14 @@
     "LabInstanceId": {
       "type": "string",
       "defaultValue": "12345abcxyz321"
+    },
+    "Password": {
+      "type": "string",
+      "defaultValue": "12345"
+    },
+    "TestType": {
+      "type": "int",
+      "defaultValue": 255
     }
   },
   "variables": {
@@ -14,27 +22,73 @@
     "sqlFirewallName": "[concat(variables('sqlServerName'),'/serviceFirewall')]",
     "sqlDatabaseName": "[concat(variables('sqlServerName'),'/customers')]",
     "mySQLServerName": "[concat('mysql',parameters('LabInstanceId'))]",
-    "cosmosDBName": "[concat('cdb',parameters('LabInstanceId'))]",
-    "searchName": "[concat('srch',parameters('LabInstanceId'))]",
+    "cosmosDbSqlName": "[concat('cdbs',parameters('LabInstanceId'))]",
+    "cosmosDbTableName": "[concat('cdbt',parameters('LabInstanceId'))]",
     "mySqlDatabaseName": "vendors",
     "mySqlVersion": "5.6",
     "mySqlSkuTier": "GeneralPurpose",
     "mySqlSkuSize": "5120",
     "mySqlSkuName": "GP_Gen4_2",
     "mySqlDTU": "2",
-    "sqlPassword": "[concat('Pa55word',parameters('LabInstanceId'))]",
-    "sqlAdmin": "student"
+    "adminPassword": "[concat('Azure!',parameters('Password'))]",
+    "adminUser": "student",
+    "vmBaseName": "CSWS",
+    "vnetName": "[concat(variables('vmBaseName'), '-VNET')]",
+    "vnetPrefix": "10.0.0.0/16",
+    "subnetName": "Subnet-1",
+    "subnetPrefix": "10.0.0.0/24",
+    "vmImagePublisher": "MicrosoftVisualStudio",
+    "vmImageOffer": "VisualStudio",
+    "vmImageSku": "VS-2017-Comm-WS2016",
+    "vmOSDiskName": "vmOSDisk",
+    "vmVmSize": "Standard_D2_v2",
+    "vmVnetID": "[resourceId('Microsoft.Network/virtualNetworks', variables('vnetName'))]",
+    "vmSubnetRef": "[concat(variables('vmVnetID'), '/subnets/', variables('subnetName'))]",
+    "vmStorageAccountContainerName": "vhds",
+    "vmName": "[concat(variables('vmBaseName'), '-VM')]",
+    "vmNicName": "[concat(variables('vmBaseName'), '-NIC')]",
+    "vmPipName": "[concat(variables('vmBaseName'), '-PIP')]",
+    "deployStorage": "[bool(or(or(or(equals(parameters('TestType'),1),equals(parameters('TestType'),2)),equals(parameters('TestType'),3)),greater(parameters('TestType'),48)))]",
+    "deploySQL": "[bool(or(or(equals(parameters('TestType'),4),equals(parameters('TestType'),12)),greater(parameters('TestType'),48)))]",
+    "deployMySQL": "[bool(or(or(equals(parameters('TestType'),8),equals(parameters('TestType'),12)),greater(parameters('TestType'),48)))]",
+    "deployCDBDocument": "[bool(or(or(equals(parameters('TestType'),16),equals(parameters('TestType'),48)),greater(parameters('TestType'),48)))]",
+    "deployCDBTable": "[bool(or(or(equals(parameters('TestType'),16),equals(parameters('TestType'),48)),greater(parameters('TestType'),48)))]"
+
   },
   "resources": [
     {
       "type": "Microsoft.DocumentDB/databaseAccounts",
       "kind": "GlobalDocumentDB",
-      "name": "[variables('cosmosDBName')]",
+      "name": "[variables('cosmosDbSqlName')]",
       "apiVersion": "2015-04-08",
       "location": "[resourceGroup().location]",
       "tags": {
         "defaultExperience": "DocumentDB",
-        "DisplayName": "Document DB"
+        "DisplayName": "Cosmos DB - Document DB"
+      },
+      "scale": null,
+      "condition": "[variables('deployCDBDocument')]",
+      "properties": {
+        "databaseAccountOfferType": "Standard",
+        "consistencyPolicy": {
+          "defaultConsistencyLevel": "Session",
+          "maxIntervalInSeconds": 5,
+          "maxStalenessPrefix": 100
+        },
+        "name": "[variables('cosmosDbSqlName')]"
+      },
+      "dependsOn": []
+    },
+
+    {
+      "type": "Microsoft.DocumentDB/databaseAccounts",
+      "kind": "GlobalDocumentDB",
+      "name": "[variables('cosmosDbTableName')]",
+      "apiVersion": "2015-04-08",
+      "location": "East US",
+      "condition": "[variables('deployCDBTable')]",
+      "tags": {
+        "defaultExperience": "Table"
       },
       "scale": null,
       "properties": {
@@ -44,32 +98,9 @@
           "maxIntervalInSeconds": 5,
           "maxStalenessPrefix": 100
         },
-        "name": "[variables('cosmosDBName')]"
+        "name": "[variables('cosmosDbTableName')]"
       },
-      "dependsOn": [],
-      "tags": {
-        "displayName": "Cosmos DB"
-      }
-    },
-
-    {
-      "type": "Microsoft.Search/searchServices",
-      "sku": {
-        "name": "Basic"
-      },
-      "name": "[variables('searchName')]",
-      "apiVersion": "2015-08-19",
-      "location": "[resourceGroup().location]",
-      "scale": null,
-      "properties": {
-        "replicaCount": 1,
-        "partitionCount": 1,
-        "hostingMode": "Default"
-      },
-      "dependsOn": [],
-      "tags": {
-        "displayName": "Search Service"
-      }
+      "dependsOn": []
     },
 
     {
@@ -78,10 +109,11 @@
       "name": "[variables('sqlServerName')]",
       "apiVersion": "2015-05-01-preview",
       "location": "[resourceGroup().location]",
+      "condition": "[variables('deploySQL')]",
       "scale": null,
       "properties": {
-        "administratorLogin": "[variables('sqlAdmin')]",
-        "administratorLoginPassword": "[variables('sqlPassword')]",
+        "administratorLogin": "[variables('adminUser')]",
+        "administratorLoginPassword": "[variables('adminPassword')]",
 
         "version": "12.0"
       },
@@ -147,6 +179,7 @@
       "name": "[variables('storageName')]",
       "apiVersion": "2018-02-01",
       "location": "[resourceGroup().location]",
+      "condition": "[variables('deployStorage')]",
       "tags": {
         "displayName": "Storage Account"
       },
@@ -175,20 +208,19 @@
       "dependsOn": []
     },
 
-
-
     {
       "apiVersion": "2017-12-01-preview",
       "kind": "",
       "location": "[resourceGroup().location]",
       "name": "[variables('mySQLServerName')]",
+      "condition": "[variables('deployMySQL')]",
       "tags": {
         "displayName": "MySQL Server"
       },
       "properties": {
         "version": "[variables('mysqlVersion')]",
-        "administratorLogin": "[variables('sqlAdmin')]",
-        "administratorLoginPassword": "[variables('sqlPassword')]",
+        "administratorLogin": "[variables('adminUser')]",
+        "administratorLoginPassword": "[variables('adminPassword')]",
         "storageProfile": {
           "storageMB": "[variables('mySqlSkuSize')]",
           "backupRetentionDays": "7",
@@ -238,6 +270,119 @@
           ]
         }
       ]
+    },
+
+    {
+      "name": "[variables('vnetName')]",
+      "type": "Microsoft.Network/virtualNetworks",
+      "location": "[resourceGroup().location]",
+      "apiVersion": "2016-03-30",
+      "dependsOn": [],
+      "tags": {
+        "displayName": "Virtual Network"
+      },
+      "properties": {
+        "addressSpace": {
+          "addressPrefixes": [
+            "[variables('vnetPrefix')]"
+          ]
+        },
+        "subnets": [
+          {
+            "name": "[variables('subnetName')]",
+            "properties": {
+              "addressPrefix": "[variables('subnetPrefix')]"
+            }
+          }
+        ]
+      }
+    },
+
+    {
+      "name": "[variables('vmNicName')]",
+      "type": "Microsoft.Network/networkInterfaces",
+      "location": "[resourceGroup().location]",
+      "apiVersion": "2016-03-30",
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/virtualNetworks', variables('vnetName'))]",
+        "[resourceId('Microsoft.Network/publicIPAddresses', variables('vmPipName'))]"
+      ],
+      "tags": {
+        "displayName": "vmNic"
+      },
+      "properties": {
+        "ipConfigurations": [
+          {
+            "name": "ipconfig1",
+            "properties": {
+              "privateIPAllocationMethod": "Dynamic",
+              "subnet": {
+                "id": "[variables('vmSubnetRef')]"
+              },
+              "publicIPAddress": {
+                "id": "[resourceId('Microsoft.Network/publicIPAddresses', variables('vmPipName'))]"
+              }
+            }
+          }
+        ]
+      }
+    },
+
+    {
+      "name": "[variables('vmName')]",
+      "type": "Microsoft.Compute/virtualMachines",
+      "location": "[resourceGroup().location]",
+      "apiVersion": "2017-03-30",
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/networkInterfaces', variables('vmNicName'))]"
+      ],
+      "tags": {
+        "displayName": "Azure Storage Challenge VM"
+      },
+      "properties": {
+        "hardwareProfile": {
+          "vmSize": "[variables('vmVmSize')]"
+        },
+        "osProfile": {
+          "computerName": "[variables('vmName')]",
+          "adminUsername": "[variables('adminUser')]",
+          "adminPassword": "[variables('adminPassword')]"
+        },
+        "storageProfile": {
+          "imageReference": {
+            "publisher": "[variables('vmImagePublisher')]",
+            "offer": "[variables('vmImageOffer')]",
+            "sku": "[variables('vmImageSku')]",
+            "version": "latest"
+          },
+          "osDisk": {
+            "name": "vmOSDisk",
+            "caching": "ReadWrite",
+            "createOption": "FromImage"
+          }
+        },
+        "networkProfile": {
+          "networkInterfaces": [
+            {
+              "id": "[resourceId('Microsoft.Network/networkInterfaces', variables('vmNicName'))]"
+            }
+          ]
+        }
+      }
+    },
+
+    {
+      "name": "[variables('vmPipName')]",
+      "type": "Microsoft.Network/publicIPAddresses",
+      "location": "[resourceGroup().location]",
+      "apiVersion": "2016-03-30",
+      "dependsOn": [],
+      "tags": {
+        "displayName": "vmPip"
+      },
+      "properties": {
+        "publicIPAllocationMethod": "Dynamic"
+      }
     }
 
   ]

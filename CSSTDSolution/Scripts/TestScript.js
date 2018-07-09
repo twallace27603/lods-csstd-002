@@ -1,5 +1,6 @@
 ﻿$(document).ready(function () {
     var testType = new Number($('#testType').val());
+    var key = "thisaintakey";
 
     if ((testType & 3) > 0) {
         $('#storageTest').click(storageTest);
@@ -12,7 +13,7 @@
     }
     function storageTest() {
         clearResults();
-        var storageConnection = $('#storageConnection').val();
+        var storageConnection = "storageAccount=" + $('#storageAccount').val() + "&storageKey=" + encodeURIComponent($('#storageKey').val());
         if ((testType & 1) === 1) {
             runTest("publicupload", storageConnection, "Public Blob Upload", null, null, processStoragePublicUploadResults, false);
         }
@@ -21,12 +22,12 @@
         }
     }
     function processStoragePublicUploadResults(resultsData, title, fieldNames, fieldTitles, showData) {
-        var storageConnection = $('#storageConnection').val();
+        var storageConnection = "storageAccount=" + $('#storageAccount').val() + "&storageKey=" + encodeURIComponent($('#storageKey').val());
         processStorageResults(resultsData, title, fieldNames, fieldTitles, showData);
         runTest("publicdownload", storageConnection, "Public Blob Download", null, null, processStorageResults, true);
     }
     function processStoragePrivateUploadResults(resultsData, title, fieldNames, fieldTitles, showData) {
-        var storageConnection = $('#storageConnection').val();
+        var storageConnection = "storageAccount=" + $('#storageAccount').val() + "&storageKey=" + encodeURIComponent($('#storageKey').val());
         processStorageResults(resultsData, title, fieldNames, fieldTitles, showData);
         runTest("privatedownload", storageConnection, "Private Blob Download", null, null, processStorageResults, true);
         runTest("privatesas", storageConnection, "Private SAS Generation", null, null, processStorageResults, false);
@@ -34,22 +35,24 @@
 
     function sqlTest() {
         clearResults();
-        var sqlConnection = $('#sqlConnection').val();
-        var mysqlConnection = $('#mysqlConnection').val();
+        var sqlConnection = "connectionString=" + encodeURIComponent($('#sqlConnection').val());
+        var mysqlConnection = "connectionString=" + encodeURIComponent($('#mysqlConnection').val());
+           //Note: There was a race condition with Entity framework when running SQL and MySQL.  If both run (advanced or expert), they will run in series with MySQL running after SQL Server
         if ((testType & 4) === 4) {
             runTest("sqlupload", sqlConnection, "SQL Server Upload", null, null, processSQLUploadDataResults, false);
         }
         if ((testType & 8) === 8) {
-            runTest("mysqlupload", mysqlConnection, "MySQL Upload", null, null, processMySQLUploadDataResults, false);
+             runTest("mysqlupload", mysqlConnection, "MySQL Upload", null, null, processMySQLUploadDataResults, false);
         }
     }
     function processSQLUploadDataResults(resultsData, title, fieldNames, fieldTitles, showData) {
-        var sqlConnection = $('#sqlConnection').val();
-        processDataResults(sqlConnection, title, fieldNames, fieldTitles, showData);
+        var sqlConnection = "connectionString=" + encodeURIComponent($('#sqlConnection').val());
+        processDataResults(resultsData, title, fieldNames, fieldTitles, showData);
         runTest("sqldownload", sqlConnection, "SQL Server Download", ["ID", "Name", "PostalCode"], ["ID", "Customer Name", "Postal Code"], processDataResults, true);
     }
+ 
     function processMySQLUploadDataResults(resultsData, title, fieldNames, fieldTitles, showData) {
-        var mysqlConnection = $('#mysqlConnection').val();
+        var mysqlConnection = "connectionString=" + encodeURIComponent($('#mysqlConnection').val());
         processDataResults(resultsData, title, fieldNames, fieldTitles, showData);
         runTest("mysqldownload", mysqlConnection, "MySQL Download", ["ID", "Name", "Industry"], ["ID", "Vendor Name", "Industry"], processDataResults, true);
 
@@ -57,27 +60,31 @@
 
     function nosqlTest() {
         clearResults();
-        var cosmosdbConnection = $('#cosmosdbConnection').val();
-        var searchConnection = $('#searchAccount').val() + ";" + $('#searchKey').val();
+        var cosmosdbSQLConnection = "connectionString=" + encodeURIComponent($('#cosmosdbSQLConnection').val());
+        var cosmosdbTableConnection = "connectionString=" + encodeURIComponent($('#cosmosdbTableConnection').val());
+
         if ((testType & 16) === 16) {
-            runTest("cosmosupload", cosmosdbConnection, "Cosmos DB Upload", null, null, processCosmosUploadDataResults, false);
+            runTest("cosmossqlupload", cosmosdbSQLConnection, "Cosmos DB SQL Upload", null, null, processCosmosSQLUploadDataResults, false);
 
         }
         if ((testType & 32) === 32) {
-            runTest("searchindex", searchConnection, "Search Upload", null, null, processSearchIndexResults, false);
+            runTest("cosmostableupload", cosmosdbTableConnection, "Cosmos DB SQL Upload", null, null, processCosmosTableUploadDataResults, false);
         }
     }
-    function processCosmosUploadDataResults(resultsData, title, fieldNames, fieldTitles, showData) {
-        var cosmosdbConnection = $('#cosmosdbConnection').val();
+    function processCosmosSQLUploadDataResults(resultsData, title, fieldNames, fieldTitles, showData) {
+        var cosmosdbConnection = "connectionString=" + encodeURIComponent($('#cosmosdbSQLConnection').val());
         processDataResults(resultsData, title, fieldNames, fieldTitles, showData);
-        runTest("cosmosdownload", cosmosdbConnection, "Cosmos DB Download", ["Industry", "Name", "Tier"], ["Industry", "Name", "Tier"], processDataResults, true);
+        runTest("cosmossqldownload", cosmosdbConnection, "Cosmos DB SQL Download", ["Industry", "Name", "Tier"], ["Industry", "Name", "Tier"], processDataResults, true);
 
     }
-    function processSearchIndexResults(resultsData, title, fieldNames, fieldTitles, showData) {
-        var searchConnection = $('#searchAccount').val() + ";" + $('#searchKey').val();
+
+    function processCosmosTableUploadDataResults(resultsData, title, fieldNames, fieldTitles, showData) {
+        var cosmosdbConnection = "connectionString=" + encodeURIComponent($('#cosmosdbTableConnection').val());
         processDataResults(resultsData, title, fieldNames, fieldTitles, showData);
-        runTest("searchdownload", searchConnection, "Search Download", [ "Name", "Tier", "Industry"], ["Product", "Tier", "Industry"], processDataResults, true);
+        runTest("cosmostabledownload", cosmosdbConnection, "Cosmos DB Table Download", ["Industry", "Name", "Tier"], ["Industry", "Name", "Tier"], processDataResults, true);
+
     }
+
     function processStorageResults(resultsData, title, fieldNames, fieldTitles, showData) {
         var status = resultsData.Code === 0 ? "Success" : "Failed";
         var result = "<tr><td>" + status + "</td><td><h3>" + title + "</h3><p>" + resultsData.Text + "</p></td></tr>";
@@ -118,10 +125,10 @@
         var result = "<tr><td>Error</td><td><h3>" + title + "</h3><p>" + errorInfo + "</p></td></tr>";
         addResult(result);
     }
-    function runTest(operation, connection, title, fieldNames, fieldTitles, callBack, showData) {
-        var url = "/evaluate/" + operation + "?connectionString=" + connection;
+    function runTest(operation, queryString, title, fieldNames, fieldTitles, callBack, showData) {
+        var url = "/evaluate/" + operation + "?" + queryString + "&encryptionKey=" + encodeURIComponent(key);
         $.get(url).done(function (data) {
-            callBack(data, title, fieldNames, fieldTitles,  showData);
+            callBack(data, title, fieldNames, fieldTitles, showData);
         }).fail(function (error) {
             processError(error, title);
         });

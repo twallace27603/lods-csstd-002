@@ -214,9 +214,9 @@
     <Compile Include="Global.asax.cs">
       <DependentUpon>Global.asax</DependentUpon>
     </Compile>
-    <Compile Include="Models\CosmosDBContext.cs" />
+    <Compile Include="Models\CosmosDBSQLContext.cs" />
+    <Compile Include="Models\CosmosDBTableContext.cs" />
     <Compile Include="Models\MySQLContext.cs" />
-    <Compile Include="Models\SearchContext.cs" />
     <Compile Include="Models\SQLServerContext.cs" />
     <Compile Include="Models\StorageContext.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
@@ -233,6 +233,7 @@
     <Content Include="SampleData\doors.jpg" />
     <Content Include="SampleData\labondemand.jpg" />
     <Content Include="SampleData\lodslogo.png" />
+    <None Include="SampleData\ProductMentionData.json" />
     <Content Include="Scripts\bootstrap.js" />
     <Content Include="Scripts\bootstrap.min.js" />
     <Content Include="ApplicationInsights.config">

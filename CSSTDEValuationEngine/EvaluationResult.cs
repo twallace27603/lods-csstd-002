@@ -15,5 +15,6 @@ namespace CSSTDEvaluation
         public int Code { get; set; }
         public string Text { get; set; }
         public List<T> Results { get; set; }
+        public string Encrypted { get; set; }
     }
 }

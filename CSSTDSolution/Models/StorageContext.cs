@@ -12,10 +12,9 @@ namespace CSSTDSolution.Models
     public class StorageContext : IStorageContext
     {
         private CloudBlobClient client;
-        public StorageContext(string connectionString)
+        public StorageContext(string storageAccount, string storageKey)
         {
-            this.ConnectionString = connectionString;
-            var account = CloudStorageAccount.Parse(connectionString);
+             var account = new CloudStorageAccount(new Microsoft.WindowsAzure.Storage.Auth.StorageCredentials(storageAccount, storageKey),true);
             client = account.CreateCloudBlobClient();
         }
 

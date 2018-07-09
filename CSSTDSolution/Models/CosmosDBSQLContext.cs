@@ -10,7 +10,7 @@ using System.Threading.Tasks;
 
 namespace CSSTDSolution.Models
 {
-    public class CosmosDBContext : ICosmosDBContext
+    public class CosmosDBSQLContext : ICosmosDBSQLContext
     {
 
         /*
@@ -56,7 +56,7 @@ namespace CSSTDSolution.Models
         private DocumentClient client;
         private string databaseName = "productDB";
         private string collectionName = "products";
-        public CosmosDBContext(string connectionString)
+        public CosmosDBSQLContext(string connectionString)
         {
             var connect = connectionString.Split(';');
             var uri = connect[0].Split('=')[1];

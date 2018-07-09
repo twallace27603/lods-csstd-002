@@ -11,7 +11,7 @@ namespace CSSTDEvaluation
     public class BlobEvaluationProcessor
     {
         private SampleData sampleData;
-        public BlobEvaluationProcessor(string baseFolder)
+        public BlobEvaluationProcessor(string baseFolder, string encryptionKey)
         {
             this.sampleData = new SampleData(baseFolder);
         }
