@@ -4,6 +4,9 @@
   "parameters": {
     "LabInstanceId": {
       "value": "12345abcxyz321c"
+    },
+    "TestType": {
+      "value": 48
     }
   }
 }

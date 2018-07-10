@@ -1,0 +1,146 @@
+﻿{
+  "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "Password": {
+      "type": "string",
+      "defaultValue": "12345"
+    }
+  },
+  "variables": {
+    "adminPassword": "[concat('Azure!',parameters('Password'))]",
+    "adminUser": "student",
+    "vmBaseName": "CSWS",
+    "vnetName": "[concat(variables('vmBaseName'), '-VNET')]",
+    "vnetPrefix": "10.0.0.0/16",
+    "subnetName": "Subnet-1",
+    "subnetPrefix": "10.0.0.0/24",
+    "vmImagePublisher": "MicrosoftVisualStudio",
+    "vmImageOffer": "VisualStudio",
+    "vmImageSku": "VS-2017-Comm-WS2016",
+    "vmOSDiskName": "vmOSDisk",
+    "vmVmSize": "Standard_D2_v2",
+    "vmVnetID": "[resourceId('Microsoft.Network/virtualNetworks', variables('vnetName'))]",
+    "vmSubnetRef": "[concat(variables('vmVnetID'), '/subnets/', variables('subnetName'))]",
+    "vmStorageAccountContainerName": "vhds",
+    "vmName": "[concat(variables('vmBaseName'), '-VM')]",
+    "vmNicName": "[concat(variables('vmBaseName'), '-NIC')]",
+    "vmPipName": "[concat(variables('vmBaseName'), '-PIP')]"
+  },
+  "resources": [
+    {
+      "name": "[variables('vnetName')]",
+      "type": "Microsoft.Network/virtualNetworks",
+      "location": "[resourceGroup().location]",
+      "apiVersion": "2016-03-30",
+      "dependsOn": [],
+      "tags": {
+        "displayName": "Virtual Network"
+      },
+      "properties": {
+        "addressSpace": {
+          "addressPrefixes": [
+            "[variables('vnetPrefix')]"
+          ]
+        },
+        "subnets": [
+          {
+            "name": "[variables('subnetName')]",
+            "properties": {
+              "addressPrefix": "[variables('subnetPrefix')]"
+            }
+          }
+        ]
+      }
+    },
+
+    {
+      "name": "[variables('vmNicName')]",
+      "type": "Microsoft.Network/networkInterfaces",
+      "location": "[resourceGroup().location]",
+      "apiVersion": "2016-03-30",
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/virtualNetworks', variables('vnetName'))]",
+        "[resourceId('Microsoft.Network/publicIPAddresses', variables('vmPipName'))]"
+      ],
+      "tags": {
+        "displayName": "vmNic"
+      },
+      "properties": {
+        "ipConfigurations": [
+          {
+            "name": "ipconfig1",
+            "properties": {
+              "privateIPAllocationMethod": "Dynamic",
+              "subnet": {
+                "id": "[variables('vmSubnetRef')]"
+              },
+              "publicIPAddress": {
+                "id": "[resourceId('Microsoft.Network/publicIPAddresses', variables('vmPipName'))]"
+              }
+            }
+          }
+        ]
+      }
+    },
+
+    {
+      "name": "[variables('vmName')]",
+      "type": "Microsoft.Compute/virtualMachines",
+      "location": "[resourceGroup().location]",
+      "apiVersion": "2017-03-30",
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/networkInterfaces', variables('vmNicName'))]"
+      ],
+      "tags": {
+        "displayName": "Azure Storage Challenge VM"
+      },
+      "properties": {
+        "hardwareProfile": {
+          "vmSize": "[variables('vmVmSize')]"
+        },
+        "osProfile": {
+          "computerName": "[variables('vmName')]",
+          "adminUsername": "[variables('adminUser')]",
+          "adminPassword": "[variables('adminPassword')]"
+        },
+        "storageProfile": {
+          "imageReference": {
+            "publisher": "[variables('vmImagePublisher')]",
+            "offer": "[variables('vmImageOffer')]",
+            "sku": "[variables('vmImageSku')]",
+            "version": "latest"
+          },
+          "osDisk": {
+            "name": "vmOSDisk",
+            "caching": "ReadWrite",
+            "createOption": "FromImage"
+          }
+        },
+        "networkProfile": {
+          "networkInterfaces": [
+            {
+              "id": "[resourceId('Microsoft.Network/networkInterfaces', variables('vmNicName'))]"
+            }
+          ]
+        }
+      }
+    },
+
+    {
+      "name": "[variables('vmPipName')]",
+      "type": "Microsoft.Network/publicIPAddresses",
+      "location": "[resourceGroup().location]",
+      "apiVersion": "2016-03-30",
+      "dependsOn": [],
+      "tags": {
+        "displayName": "vmPip"
+      },
+      "properties": {
+        "publicIPAllocationMethod": "Dynamic"
+      }
+    }
+  ],
+  "outputs": {
+  }
+}
