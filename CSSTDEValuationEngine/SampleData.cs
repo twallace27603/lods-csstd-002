@@ -62,18 +62,19 @@ namespace CSSTDEvaluation
                 {
                     foreach (var mention in mentions)
                     {
-                        results.Add(new ProductMention
-                        {
-                            ID = Guid.NewGuid().ToString(),
-                            Mention = mention.Replace("%product%", product.Name).Replace("%industry%", product.Industry),
-                            MentionedAt = DateTime.Now.AddDays(-rnd.Next(1, 100)).AddMinutes(-rnd.Next(1200)),
-                            Platform = platform,
-                            Product = product.Name
-                        });
+                        //results.Add(new ProductMention
+                        //{
+                        //    ID = Guid.NewGuid().ToString(),
+                        //    Mention = mention.Replace("%product%", product.Name).Replace("%industry%", product.Industry),
+                        //    MentionedAt = DateTime.Now.AddDays(-rnd.Next(1, 100)).AddMinutes(-rnd.Next(1200)),
+                        //    Platform = platform,
+                        //    Product = product.Name
+                        //});
                     }
                 }
             }
             return results;
         }
     }
+
 }
