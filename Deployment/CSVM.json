@@ -5,6 +5,18 @@
     "Password": {
       "type": "string",
       "defaultValue": "12345"
+    },
+    "_artifactsLocation": {
+      "type": "string",
+      "metadata": {
+        "description": "Auto-generated container in staging storage account to receive post-build staging folder upload"
+      }
+    },
+    "_artifactsLocationSasToken": {
+      "type": "securestring",
+      "metadata": {
+        "description": "Auto-generated token to access _artifactsLocation"
+      }
     }
   },
   "variables": {
@@ -25,7 +37,9 @@
     "vmStorageAccountContainerName": "vhds",
     "vmName": "[concat(variables('vmBaseName'), '-VM')]",
     "vmNicName": "[concat(variables('vmBaseName'), '-NIC')]",
-    "vmPipName": "[concat(variables('vmBaseName'), '-PIP')]"
+    "vmPipName": "[concat(variables('vmBaseName'), '-PIP')]",
+    "projectCloneScriptFolder": "CustomScripts",
+    "projectCloneScriptFileName": "projectClone.ps1"
   },
   "resources": [
     {
@@ -124,7 +138,33 @@
             }
           ]
         }
-      }
+      },
+      "resources": [
+        {
+          "name": "projectClone",
+          "type": "extensions",
+          "location": "[resourceGroup().location]",
+          "apiVersion": "2016-03-30",
+          "dependsOn": [
+            "[resourceId('Microsoft.Compute/virtualMachines', variables('vmName'))]"
+          ],
+          "tags": {
+            "displayName": "projectClone"
+          },
+          "properties": {
+            "publisher": "Microsoft.Compute",
+            "type": "CustomScriptExtension",
+            "typeHandlerVersion": "1.4",
+            "autoUpgradeMinorVersion": true,
+            "settings": {
+              "fileUris": [
+                "[concat(parameters('_artifactsLocation'), '/', variables('projectCloneScriptFolder'), '/', variables('projectCloneScriptFileName'), parameters('_artifactsLocationSasToken'))]"
+              ],
+              "commandToExecute": "[concat('powershell -ExecutionPolicy Unrestricted -File ', variables('projectCloneScriptFolder'), '/', variables('projectCloneScriptFileName'))]"
+            }
+          }
+        }
+      ]
     },
 
     {
