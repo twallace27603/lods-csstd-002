@@ -25,8 +25,9 @@
   <ItemGroup>
     <Content Include="azuredeploy.json" />
     <Content Include="azuredeploy.parameters.json" />
-    <None Include="CSVM.json" />
+    <Content Include="CSVM.json" />
     <Content Include="CustomScripts\projectClone.ps1" />
+    <Content Include="csvm.parameters.json" />
     <None Include="Deployment.targets">
       <Visible>False</Visible>
     </None>
