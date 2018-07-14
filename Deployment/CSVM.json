@@ -8,7 +8,11 @@
     },
     "LabInstanceId": {
       "type": "string",
-      "defaultValue": "12345"
+      "defaultValue": "12345c"
+    },
+    "VMSize": {
+      "type": "string",
+      "defaultValue": "Standard_D2S_V3"
     }
   },
   "variables": {
@@ -23,7 +27,7 @@
     "vmImageOffer": "VisualStudio",
     "vmImageSku": "VS-2017-Comm-WS2016",
     "vmOSDiskName": "vmOSDisk",
-    "vmVmSize": "Standard_D2_v2",
+    "vmVmSize": "[parameters('VMSize')]",
     "vmVnetID": "[resourceId('Microsoft.Network/virtualNetworks', variables('vnetName'))]",
     "vmSubnetRef": "[concat(variables('vmVnetID'), '/subnets/', variables('subnetName'))]",
     "vmStorageAccountContainerName": "vhds",
