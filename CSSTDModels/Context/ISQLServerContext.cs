@@ -6,9 +6,9 @@ namespace CSSTDModels
     public interface ISQLServerContext
     {
         string ConnectionString { get; set; }
-        void CreateTable();
-        void LoadData(List<CustomerData> customers);
-        List<CustomerData> GetData();
+        void CreateTable(string tableName);
+        void LoadData(List<CustomerData> customers, string tableName);
+        List<CustomerData> GetData(string tableName);
 
     }
 

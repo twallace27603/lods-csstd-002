@@ -1,9 +1,11 @@
-﻿using System;
+﻿using CSSTDModels;
+using Microsoft.Azure.CosmosDB.Table;
+using Microsoft.Azure.Storage;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-using System.Web;
-using CSSTDModels;
+using CDB = Microsoft.Azure.CosmosDB;
 
 namespace CSSTDSolution.Models
 {
@@ -11,24 +13,104 @@ namespace CSSTDSolution.Models
     {
         public string ConnectionString { get; set; }
 
-        public Task CreateTable()
+        private CloudTableClient client;
+        public CosmosDBTableContext(string accountName, string key)
         {
-            throw new NotImplementedException();
+            var endpoint = $"https://{accountName}.table.cosmosdb.azure.com";
+            var uri = new StorageUri(new Uri(endpoint));
+            client = new CDB.Table.CloudTableClient(uri, new Microsoft.Azure.Storage.Auth.StorageCredentials(accountName, key));
+
         }
 
-        public List<ProductMention> GetMentions()
+        public void CreateTable(string tableName)
         {
-            throw new NotImplementedException();
+            var table = client.GetTableReference(tableName);
+            table.CreateIfNotExists();
+            
+
         }
 
-        public List<ProductMention> GetMentions(string product, string platform)
+        public List<IProductMention> GetMentions(string tableName)
         {
-            throw new NotImplementedException();
+            var table = client.GetTableReference(tableName);
+            var query = new TableQuery<ProductMention>();
+            return new List<IProductMention>(table.ExecuteQuery(query).ToList());
+
+
         }
 
-        public Task LoadMentions(List<ProductMention> mentions)
+        public List<IProductMention> GetMentions(string product, string platform, string tableName)
         {
-            throw new NotImplementedException();
+            var table = client.GetTableReference(tableName);
+            var query = new TableQuery<ProductMention>()
+            {
+                FilterString = TableQuery.GenerateFilterCondition("PartitionKey", QueryComparisons.Equal, $"{platform}:{product}"),
+            };
+
+            return new List<IProductMention>(table.ExecuteQuery(query).ToList());
         }
+
+        public void LoadMentions(List<IProductMention> mentions, string tableName)
+        {
+            var table = client.GetTableReference(tableName);
+            foreach (var mention in mentions)
+            {
+                try
+                {
+                    var tableMention = new ProductMention(mention);
+                    var op = TableOperation.Insert(tableMention);
+                    table.Execute(op);
+                }
+                catch(Exception ex)
+                {
+                    System.Diagnostics.Trace.TraceError($"There was an error processing the mentions: {ex.ToString()}");
+                }
+
+
+            }
+            
+        }
+    }
+    public class ProductMention : TableEntity, IProductMention
+    {
+        public ProductMention() { }
+
+        public ProductMention(IProductMention source)
+        {
+            this.MentionID = source.MentionID;
+            this.Product = source.Product;
+            this.Platform = source.Platform;
+            this.Mention = source.Mention;
+            this.MentionedAt = source.MentionedAt;
+        }
+        private string product, platform;
+
+        public string Product
+        {
+            get { return this.product; }
+            set
+            {
+                this.product = value;
+                setPartition();
+            }
+        }
+        public string Platform
+        {
+            get { return this.platform; }
+            set
+            {
+                this.platform = value;
+                setPartition();
+            }
+        }
+
+        private void setPartition()
+        {
+            this.PartitionKey = $"{platform}:{product}";
+        }
+
+        public string MentionedAt { get; set; }
+        public string Mention { get; set; }
+        public string MentionID { get => this.RowKey; set => this.RowKey = value; }
     }
 }

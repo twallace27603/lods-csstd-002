@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 using System.Data.Entity;
+using System.Data.SqlClient;
 
 namespace CSSTDSolution.Models
 {
@@ -16,67 +17,72 @@ namespace CSSTDSolution.Models
         public string ConnectionString { get; set; }
 
 
-        public void CreateTable()
+        public void CreateTable(string tableName)
         {
-            //There is no need for code here because I am using Entity Framework
+            var SQL = $"If not Exists(SELECT * FROM sys.tables WHERE name = '{tableName}')" +
+                $" CREATE TABLE dbo.{tableName}(ID int, Name VARCHAR(500), PostalCode VARCHAR(500));" +
+                $" DELETE FROM {tableName};";
+            using (var conn = new SqlConnection(this.ConnectionString))
+            {
+                using (var cmd = new SqlCommand(SQL, conn))
+                {
+                    conn.Open();
+                    cmd.ExecuteNonQuery();
+                    conn.Close();
+                }
+
+            }
         }
 
-        public List<CustomerData> GetData()
+        public List<CustomerData> GetData(string tableName)
         {
-            List<CustomerData> results;
-            using (var context = new SqlServerDbContext(this.ConnectionString))
+            List<CustomerData> results = new List<CustomerData>();
+            var SQL = $"SELECT * FROM dbo.{tableName};";
+            using (var conn = new SqlConnection(this.ConnectionString))
             {
-                results = new List<CustomerData>( context.Customers.ToListAsync().Result);
+                using (var cmd = new SqlCommand(SQL, conn))
+                {
+                    conn.Open();
+                    var rdr = cmd.ExecuteReader();
+                    while (rdr.Read())
+                    {
+                        results.Add(new CustomerData
+                        {
+                            ID = (int)rdr["ID"],
+                            Name = rdr["Name"].ToString(),
+                            PostalCode = rdr["PostalCode"].ToString()
+                        });
+                    }
+                    conn.Close();
+                }
+
             }
             return results;
         }
 
-        public void LoadData(List<CustomerData> customers)
+        public void LoadData(List<CustomerData> customers, string tableName)
         {
-            using (var context = new SqlServerDbContext(this.ConnectionString))
+            var SQL = $"INSERT INTO {tableName}(ID,Name,PostalCode) VALUES (@ID, @Name, @PostalCode);";
+            using (var conn = new SqlConnection(this.ConnectionString))
             {
-                try
+                using (var cmd = new SqlCommand(SQL, conn))
                 {
-                    context.Database.ExecuteSqlCommand("IF EXISTS(SELECT * FROM sys.tables WHERE name = 'Customers') DELETE FROM dbo.Customers;");
+                    conn.Open();
+                    cmd.Parameters.Add(new SqlParameter("@ID", System.Data.SqlDbType.Int));
+                    cmd.Parameters.Add(new SqlParameter("@Name", System.Data.SqlDbType.VarChar, 500));
+                    cmd.Parameters.Add(new SqlParameter("@PostalCode", System.Data.SqlDbType.VarChar, 500));
+                    foreach(var customer in customers)
+                    {
+                        cmd.Parameters["@ID"].Value = customer.ID;
+                        cmd.Parameters["@Name"].Value = customer.Name;
+                        cmd.Parameters["@PostalCode"].Value = customer.PostalCode;
+                        cmd.ExecuteNonQuery();
+                    }
+                    conn.Close();
                 }
-                catch { }
-                foreach(var customer in customers)
-                {
-                    context.Customers.Add(new SQLCustomer(customer));
-                }
-                context.SaveChanges();
+
             }
-
         }
     }
-    public class SqlServerDbContext : DbContext
-    {
-        public SqlServerDbContext(string connectionString) : base(connectionString) { }
-        public DbSet<SQLCustomer> Customers { get; set; }
 
-    }
-
-    [MetadataType(typeof(SQLCustomerMetadata))]
-    public class SQLCustomer:CustomerData
-    {
-        public SQLCustomer() { }
-
-        public SQLCustomer(CustomerData source)
-        {
-            this.ID = source.ID;
-            this.Name = source.Name;
-            this.PostalCode = source.PostalCode;
-        }
-
-    }
-
-    [Table("Customers")]
-    public class SQLCustomerMetadata
-    {
-        [Key]
-        public int ID { get; set; }
-        public string Name { get; set; }
-        public string PostalCode { get; set; }
-
-    }
 }

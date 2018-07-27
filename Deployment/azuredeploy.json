@@ -12,8 +12,9 @@
     },
     "TestType": {
       "type": "int",
-      "defaultValue": 255
+      "defaultValue": 4
     }
+
   },
   "variables": {
     "webAppName": "[concat('wa',parameters('LabInstanceId'))]",
@@ -24,6 +25,8 @@
     "mySQLServerName": "[concat('mysql',parameters('LabInstanceId'))]",
     "cosmosDbSqlName": "[concat('cdbs',parameters('LabInstanceId'))]",
     "cosmosDbTableName": "[concat('cdbt',parameters('LabInstanceId'))]",
+    "testWebName": "[concat('lods',parameters('LabInstanceId'))]",
+    "testWebAspName": "testWeb-ASP",
     "mySqlDatabaseName": "vendors",
     "mySqlVersion": "5.6",
     "mySqlSkuTier": "GeneralPurpose",
@@ -32,11 +35,13 @@
     "mySqlDTU": "2",
     "adminPassword": "[concat('Azure!',parameters('Password'))]",
     "adminUser": "student",
+    "testWebASPSku": "S1",
     "deployStorage": "[bool(or(or(or(equals(parameters('TestType'),1),equals(parameters('TestType'),2)),equals(parameters('TestType'),3)),greater(parameters('TestType'),48)))]",
     "deploySQL": "[bool(or(or(equals(parameters('TestType'),4),equals(parameters('TestType'),12)),greater(parameters('TestType'),48)))]",
     "deployMySQL": "[bool(or(or(equals(parameters('TestType'),8),equals(parameters('TestType'),12)),greater(parameters('TestType'),48)))]",
     "deployCDBDocument": "[bool(or(or(equals(parameters('TestType'),16),equals(parameters('TestType'),48)),greater(parameters('TestType'),48)))]",
-    "deployCDBTable": "[bool(or(or(equals(parameters('TestType'),32),equals(parameters('TestType'),48)),greater(parameters('TestType'),48)))]"
+    "deployCDBTable": "[bool(or(or(equals(parameters('TestType'),32),equals(parameters('TestType'),48)),greater(parameters('TestType'),48)))]",
+    "deployTestWeb": "[bool(or(or(equals(parameters('TestType'),3),equals(parameters('TestType'),12)),greater(parameters('TestType'),47)))]"
 
   },
   "resources": [
@@ -225,7 +230,7 @@
       "location": "[resourceGroup().location]",
       "tags": {
         "defaultExperience": "DocumentDB",
-        "DisplayName": "Cosmos DB - Document DB"
+        "displayName": "Cosmos DB - Document DB"
       },
       "scale": null,
       "condition": "[variables('deployCDBDocument')]",
@@ -250,7 +255,8 @@
       "location": "East US",
       "condition": "[variables('deployCDBTable')]",
       "tags": {
-        "defaultExperience": "Table"
+        "defaultExperience": "Table",
+        "displayName": "Cosmos DB - Table API"
       },
       "scale": null,
       "properties": {
@@ -263,6 +269,46 @@
         "name": "[variables('cosmosDbTableName')]"
       },
       "dependsOn": []
+    },
+
+    /*  Test Web app ASP */
+    {
+      "name": "[variables('testWebAspName')]",
+      "type": "Microsoft.Web/serverfarms",
+      "location": "[resourceGroup().location]",
+      "apiVersion": "2015-08-01",
+      "condition": "[variables('deployTestWeb')]",
+      "sku": {
+        "name": "[variables('testWebASPSku')]"
+      },
+      "dependsOn": [],
+      "tags": {
+        "displayName": "testweb-ASP"
+      },
+      "properties": {
+        "name": "[variables('testWebAspName')]",
+        "numberOfWorkers": 1
+      }
+    },
+
+    /* Test web app  */
+    {
+      "name": "[variables('testWebName')]",
+      "type": "Microsoft.Web/sites",
+      "location": "[resourceGroup().location]",
+      "condition": "[variables('deployTestWeb')]",
+      "apiVersion": "2015-08-01",
+      "dependsOn": [
+        "[resourceId('Microsoft.Web/serverfarms', variables('testWebAspName'))]"
+      ],
+      "tags": {
+        "[concat('hidden-related:', resourceId('Microsoft.Web/serverfarms', variables('testWebAspName')))]": "Resource",
+        "displayName": "testWeb"
+      },
+      "properties": {
+        "name": "[variables('testWebName')]",
+        "serverFarmId": "[resourceId('Microsoft.Web/serverfarms', variables('testWebAspName'))]"
+      }
     }
 
   ]

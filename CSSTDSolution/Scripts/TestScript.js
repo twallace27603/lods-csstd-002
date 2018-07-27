@@ -13,77 +13,52 @@
     }
     function storageTest() {
         clearResults();
-        var storageConnection = "storageAccount=" + $('#storageAccount').val() + "&storageKey=" + encodeURIComponent($('#storageKey').val());
         if ((testType & 1) === 1) {
-            runTest("publicupload", storageConnection, "Public Blob Upload", null, null, processStoragePublicUploadResults, false);
+            storageConnection = "storageAccount=" + $('#storageAccount').val() + "&storageKey=" + encodeURIComponent($('#storageKey').val()) + "&containerName=public&isPrivate=false";
+            runTest("blobupload", storageConnection, "Public Blob Upload", null, null, processStorageResults, false);
+            runTest("blobdownload", storageConnection, "Public Blob Download", null, null, processStorageResults, true);
         }
         if ((testType & 2) === 2) {
-            runTest("privateupload", storageConnection, "Private Blob Upload", null, null, processStoragePrivateUploadResults, false);
+            storageConnection = "storageAccount=" + $('#storageAccount').val() + "&storageKey=" + encodeURIComponent($('#storageKey').val()) + "&containerName=private&isPrivate=true";
+            runTest("blobupload", storageConnection, "Private Blob Upload", null, null, processStorageResults, false);
+            runTest("blobsas", storageConnection, "Private SAS Generation", null, null, processStorageResults, false);
+            runTest("blobdownload", storageConnection, "Private Blob Download", null, null, processStorageResults, true);
         }
     }
-    function processStoragePublicUploadResults(resultsData, title, fieldNames, fieldTitles, showData) {
-        var storageConnection = "storageAccount=" + $('#storageAccount').val() + "&storageKey=" + encodeURIComponent($('#storageKey').val());
-        processStorageResults(resultsData, title, fieldNames, fieldTitles, showData);
-        runTest("publicdownload", storageConnection, "Public Blob Download", null, null, processStorageResults, true);
-    }
-    function processStoragePrivateUploadResults(resultsData, title, fieldNames, fieldTitles, showData) {
-        var storageConnection = "storageAccount=" + $('#storageAccount').val() + "&storageKey=" + encodeURIComponent($('#storageKey').val());
-        processStorageResults(resultsData, title, fieldNames, fieldTitles, showData);
-        runTest("privatedownload", storageConnection, "Private Blob Download", null, null, processStorageResults, true);
-        runTest("privatesas", storageConnection, "Private SAS Generation", null, null, processStorageResults, false);
-    }
+
 
     function sqlTest() {
         clearResults();
-        var sqlConnection = "connectionString=" + encodeURIComponent($('#sqlConnection').val());
-        var mysqlConnection = "connectionString=" + encodeURIComponent($('#mysqlConnection').val());
+        var sqlConnection = "connectionString=" + encodeURIComponent($('#sqlConnection').val()) + "&tableName=customers";
+        var mysqlConnection = "connectionString=" + encodeURIComponent($('#mysqlConnection').val()) + "&tableName=vendors";
            //Note: There was a race condition with Entity framework when running SQL and MySQL.  If both run (advanced or expert), they will run in series with MySQL running after SQL Server
         if ((testType & 4) === 4) {
-            runTest("sqlupload", sqlConnection, "SQL Server Upload", null, null, processSQLUploadDataResults, false);
+            runTest("sqlupload", sqlConnection, "SQL Server Upload", null, null, processDataResults, false);
+            runTest("sqldownload", sqlConnection, "SQL Server Download", ["ID", "Name", "PostalCode"], ["ID", "Customer Name", "Postal Code"], processDataResults, true);
         }
         if ((testType & 8) === 8) {
-             runTest("mysqlupload", mysqlConnection, "MySQL Upload", null, null, processMySQLUploadDataResults, false);
+            runTest("mysqlupload", mysqlConnection, "MySQL Upload", null, null, processDataResults, false);
+            runTest("mysqldownload", mysqlConnection, "MySQL Download", ["ID", "Name", "Industry"], ["ID", "Vendor Name", "Industry"], processDataResults, true);
         }
     }
-    function processSQLUploadDataResults(resultsData, title, fieldNames, fieldTitles, showData) {
-        var sqlConnection = "connectionString=" + encodeURIComponent($('#sqlConnection').val());
-        processDataResults(resultsData, title, fieldNames, fieldTitles, showData);
-        runTest("sqldownload", sqlConnection, "SQL Server Download", ["ID", "Name", "PostalCode"], ["ID", "Customer Name", "Postal Code"], processDataResults, true);
-    }
- 
-    function processMySQLUploadDataResults(resultsData, title, fieldNames, fieldTitles, showData) {
-        var mysqlConnection = "connectionString=" + encodeURIComponent($('#mysqlConnection').val());
-        processDataResults(resultsData, title, fieldNames, fieldTitles, showData);
-        runTest("mysqldownload", mysqlConnection, "MySQL Download", ["ID", "Name", "Industry"], ["ID", "Vendor Name", "Industry"], processDataResults, true);
 
-    }
 
     function nosqlTest() {
         clearResults();
-        var cosmosdbSQLConnection = "connectionString=" + encodeURIComponent($('#cosmosdbSQLConnection').val());
-        var cosmosdbTableConnection = "connectionString=" + encodeURIComponent($('#cosmosdbTableConnection').val());
+        var cosmosdbSQLConnection = "uri=" + encodeURIComponent($('#cosmosdbSQLUri').val()) + "&key=" + encodeURIComponent($('#cosmosdbSQLKey').val()) + "&collectionName=productDocuments";
+        var cosmosdbTableConnection = "accountName=" + encodeURIComponent($('#cosmosdbTableAccount').val()) + "&key=" + encodeURIComponent($('#cosmosdbTableKey').val()) + "&tableName=productMentions";
 
         if ((testType & 16) === 16) {
-            runTest("cosmossqlupload", cosmosdbSQLConnection, "Cosmos DB SQL Upload", null, null, processCosmosSQLUploadDataResults, false);
+            runTest("cosmossqlupload", cosmosdbSQLConnection, "Cosmos DB SQL Upload", null, null, processDataResults, false);
+            runTest("cosmossqldownload", cosmosdbSQLConnection, "Cosmos DB SQL Download", ["Industry", "Name", "Tier"], ["Industry", "Name", "Tier"], processDataResults, true);
 
         }
         if ((testType & 32) === 32) {
-            runTest("cosmostableupload", cosmosdbTableConnection, "Cosmos DB SQL Upload", null, null, processCosmosTableUploadDataResults, false);
+            runTest("cosmostableupload", cosmosdbTableConnection, "Cosmos DB TableL Upload", null, null, processDataResults, false);
+            runTest("cosmostabledownload", cosmosdbTableConnection, "Cosmos DB Table Download", ["Industry", "Name", "Tier"], ["Industry", "Name", "Tier"], processDataResults, true);
         }
     }
-    function processCosmosSQLUploadDataResults(resultsData, title, fieldNames, fieldTitles, showData) {
-        var cosmosdbConnection = "connectionString=" + encodeURIComponent($('#cosmosdbSQLConnection').val());
-        processDataResults(resultsData, title, fieldNames, fieldTitles, showData);
-        runTest("cosmossqldownload", cosmosdbConnection, "Cosmos DB SQL Download", ["Industry", "Name", "Tier"], ["Industry", "Name", "Tier"], processDataResults, true);
 
-    }
-
-    function processCosmosTableUploadDataResults(resultsData, title, fieldNames, fieldTitles, showData) {
-        var cosmosdbConnection = "connectionString=" + encodeURIComponent($('#cosmosdbTableConnection').val());
-        processDataResults(resultsData, title, fieldNames, fieldTitles, showData);
-        runTest("cosmostabledownload", cosmosdbConnection, "Cosmos DB Table Download", ["Industry", "Name", "Tier"], ["Industry", "Name", "Tier"], processDataResults, true);
-
-    }
 
     function processStorageResults(resultsData, title, fieldNames, fieldTitles, showData) {
         var status = resultsData.Code === 0 ? "Success" : "Failed";
@@ -92,7 +67,7 @@
         if (showData) {
             var details = "<h2>" + title + "</h2><h3>Links</h3><ul class='list-inline'>";
             $(resultsData.Results).each(function (index, blobData) {
-                details += "<li><img src='" + blobData.URL + "' heigh='200px' width='200px' /></li>";
+                details += "<li><img src='" + blobData.URL + blobData.SAS + "' heigh='200px' width='200px' /></li>";
             });
             details += "</ul>";
             $('#details').append(details);
@@ -123,11 +98,14 @@
     }
     function processError(errorInfo, title) {
         var result = "<tr><td>Error</td><td><h3>" + title + "</h3><p>" + errorInfo + "</p></td></tr>";
-        addResult(result);
+        $('#results').add(result);
     }
     function runTest(operation, queryString, title, fieldNames, fieldTitles, callBack, showData) {
         var url = "/evaluate/" + operation + "?" + queryString + "&encryptionKey=" + encodeURIComponent(key);
-        $.get(url).done(function (data) {
+        $.get({
+            url: url,
+            async: false
+        }).done(function (data) {
             callBack(data, title, fieldNames, fieldTitles, showData);
         }).fail(function (error) {
             processError(error, title);

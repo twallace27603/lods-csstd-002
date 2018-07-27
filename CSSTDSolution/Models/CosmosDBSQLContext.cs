@@ -1,8 +1,6 @@
-﻿using CSSTDEvaluation;
-using CSSTDModels;
+﻿using CSSTDModels;
 using Microsoft.Azure.Documents;
 using Microsoft.Azure.Documents.Client;
-using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -55,20 +53,16 @@ namespace CSSTDSolution.Models
          * */
         private DocumentClient client;
         private string databaseName = "productDB";
-        private string collectionName = "products";
-        public CosmosDBSQLContext(string connectionString)
+        public CosmosDBSQLContext(string uri, string key)
         {
-            var connect = connectionString.Split(';');
-            var uri = connect[0].Split('=')[1];
-            var key = connect[1].Split('=')[1] + (connect[1].EndsWith("==") ? "==" : "");
 
             client = new DocumentClient(new Uri(uri), key);
-            this.ConnectionString = connectionString;
+            //this.ConnectionString = connectionString;
         }
 
         public string ConnectionString { get; set; }
 
-        public async Task CreateCollection()
+        public async Task CreateCollection(string collectionName)
         {
             var databaseID = databaseName;
             var database = await client.CreateDatabaseIfNotExistsAsync(new Database { Id = databaseID });
@@ -79,7 +73,7 @@ namespace CSSTDSolution.Models
             DocumentCollection collection = await client.CreateDocumentCollectionIfNotExistsAsync(UriFactory.CreateDatabaseUri(databaseID), collectionSpec, new RequestOptions { OfferThroughput = 400 });
         }
 
-        public List<ProductDocument> GetDocuments()
+        public List<ProductDocument> GetDocuments(string collectionName)
         {
             IQueryable<ProductDocument> query = client.CreateDocumentQuery<ProductDocument>(
                 UriFactory.CreateDocumentCollectionUri(databaseName, collectionName));
@@ -87,34 +81,39 @@ namespace CSSTDSolution.Models
 
         }
 
-        public List<ProductDocument> GetDocuments(string industry)
+        public List<ProductDocument> GetDocuments(string industry, string collectionName)
         {
             IQueryable<ProductDocument> query = client.CreateDocumentQuery<ProductDocument>(
                 UriFactory.CreateDocumentCollectionUri(databaseName, collectionName)).Where(p => p.Industry == industry);
             return query.ToList();
         }
 
-        public async Task UploadDocuments(List<ProductDocument> documents)
+        public async Task UploadDocuments(List<ProductDocument> documents, string collectionName)
         {
-            await CreateCollection();
-            IQueryable<ProductDocument> query = client.CreateDocumentQuery<ProductDocument>(
- UriFactory.CreateDocumentCollectionUri(databaseName, collectionName));
-            if (query.Count<ProductDocument>() == 0)
+            await CreateCollection(collectionName);
+            //           IQueryable<ProductDocument> query = client.CreateDocumentQuery<ProductDocument>(
+            //UriFactory.CreateDocumentCollectionUri(databaseName, collectionName));
+            //           if (query.Count<ProductDocument>() == 0)
+            //           {
+            //Load Documents
+            foreach (var document in documents)
             {
-                //Load Documents
-                foreach (var document in documents)
+                var t = Task.Run(async () =>
                 {
                     try
                     {
                         var uri = UriFactory.CreateDocumentCollectionUri(databaseName, collectionName);
-                        var result = await client.UpsertDocumentAsync(uri,document);
+                        var result = await client.UpsertDocumentAsync(uri, document);
                         System.Diagnostics.Trace.WriteLine(result.StatusCode);
                     }
                     catch (Exception ex)
                     {
+                        System.Diagnostics.Trace.WriteLine(ex.ToString());
 
                     }
-                }
+                });
+                t.Wait();
+                //}
 
             }
 

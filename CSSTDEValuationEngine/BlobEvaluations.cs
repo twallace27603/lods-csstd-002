@@ -15,21 +15,22 @@ namespace CSSTDEvaluation
         {
             this.sampleData = new SampleData(baseFolder);
         }
+        /*
         public EvaluationResult<BlobFileData> PublicBlobUpload(IStorageContext context)
         {
-            return blobUpload(context, "public", false);
+            return BlobUpload(context, "public", false);
         }
         public EvaluationResult<BlobFileData> PublicBlobDownload(IStorageContext context)
         {
-            return blobDownload(context, "public",false);
+            return BlobDownload(context, "public",false);
         }
         public EvaluationResult<BlobFileData> PrivateBlobUpload(IStorageContext context)
         {
-            return blobUpload(context, "private", true);
+            return BlobUpload(context, "private", true);
         }
         public EvaluationResult<BlobFileData> PrivateBlobDownload(IStorageContext context)
         {
-            return blobDownload(context, "private",true);
+            return BlobDownload(context, "private",true);
         }
         public EvaluationResult<string> PrivateContainerSAS(IStorageContext context)
         {
@@ -47,11 +48,11 @@ namespace CSSTDEvaluation
             }
             return result;
         }
+*/
 
 
-
-        #region Blob helper methods
-        private EvaluationResult<BlobFileData> blobUpload(IStorageContext context, string container, bool isPrivate)
+        #region Direct Blob methods
+        public EvaluationResult<BlobFileData> BlobUpload(IStorageContext context, string container, bool isPrivate)
         {
             var result = new EvaluationResult<BlobFileData>();
             var data = sampleData.BlobData();
@@ -73,7 +74,7 @@ namespace CSSTDEvaluation
             return result;
         }
 
-        private EvaluationResult<BlobFileData> blobDownload(IStorageContext context, string container, bool isPrivate)
+        public EvaluationResult<BlobFileData> BlobDownload(IStorageContext context, string container, bool isPrivate)
         {
             var result = new EvaluationResult<BlobFileData>();
             try
@@ -86,7 +87,8 @@ namespace CSSTDEvaluation
                 {
                     try
                     {
-                        var rqst = WebRequest.CreateHttp(result.Results[0].URL);
+
+                        var rqst = WebRequest.CreateHttp(result.Results[0].URL + result.Results[0].SAS);
                         var response = rqst.GetResponse();
                         using (var results = response.GetResponseStream())
                         {
@@ -111,6 +113,22 @@ namespace CSSTDEvaluation
             return result;
         }
 
+        public EvaluationResult<string> ContainerSAS(IStorageContext context, string containerName)
+        {
+            var result = new EvaluationResult<string>();
+            try
+            {
+                var sas = context.GetSAS(containerName);
+                result.Text = sas;
+                result.Results.Add(sas);
+            }
+            catch (Exception ex)
+            {
+                result.Code = 2;
+                result.Text = $"Encountered an error generating the SAS: {ex.Message}";
+            }
+            return result;
+        }
 
         #endregion
     }

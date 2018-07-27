@@ -16,14 +16,14 @@ namespace CSSTDEvaluation
         }
         public RelationalEvaluationProcessor() { }
  
-        public EvaluationResult<CustomerData> SQLServerUpload(ISQLServerContext context)
+        public EvaluationResult<CustomerData> SQLServerUpload(ISQLServerContext context, string tableName)
         {
             var result = new EvaluationResult<CustomerData>();
             try
             {
                 var sample = sampleData.CustomerData();
-                context.CreateTable();
-                context.LoadData( sample);
+                context.CreateTable(tableName);
+                context.LoadData( sample, tableName);
                 int recCount = testCountSQL(context.ConnectionString);
                 result.Code = recCount == sample.Count ? 0 : 1;
                 result.Text = result.Code == 0 ? "Successfully uploaded customer data to SQL Server" : (recCount > -1 ? $"No errors were encountered during upload but the database record count is {recCount} and the sample record count is {sample.Count}" : "The upload did not return an error, but there was an error retrieving the SQL Server record count.");
@@ -57,13 +57,13 @@ namespace CSSTDEvaluation
 
         }
 
-        public EvaluationResult<CustomerData> SQLServerDownload(ISQLServerContext context)
+        public EvaluationResult<CustomerData> SQLServerDownload(ISQLServerContext context, string tableName)
         {
             var result = new EvaluationResult<CustomerData>();
             try
             {
                 int recCount = testCountSQL(context.ConnectionString);
-                result.Results = context.GetData();
+                result.Results = context.GetData(tableName);
                 result.Code = result.Results.Count > 0 ? 0 : 1;
                 result.Text = result.Results.Count>0 ? "Successfully downloaded customer data" : "There was no customer data downloaded.";
             }
@@ -75,13 +75,13 @@ namespace CSSTDEvaluation
             return result;
         }
 
-        public EvaluationResult<VendorData> MySQLUpload(IMySQLContext context)
+        public EvaluationResult<VendorData> MySQLUpload(IMySQLContext context, string tableName)
         {
             var result = new EvaluationResult<VendorData>();
             try
             {
-                context.CreateTable();
-                context.LoadData(sampleData.VendorData());
+                context.CreateTable(tableName);
+                context.LoadData(sampleData.VendorData(), tableName);
                 result.Text = "Successfully uploaded vendor data to MySQL";
                 result.Code = 0;
             }
@@ -93,12 +93,12 @@ namespace CSSTDEvaluation
             return result;
         }
 
-        public EvaluationResult<VendorData> MySQLDownload(IMySQLContext context)
+        public EvaluationResult<VendorData> MySQLDownload(IMySQLContext context, string tableName)
         {
             var result = new EvaluationResult<VendorData>();
             try
             {
-                result.Results = context.GetData();
+                result.Results = context.GetData(tableName);
                 result.Code = result.Results.Count > 0 ? 0 : 1;
                 result.Text = result.Results.Count > 0 ? "Successfully downloaded vendor data" : "There was no vendor data downloaded.";
             }

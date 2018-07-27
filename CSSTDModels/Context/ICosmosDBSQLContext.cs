@@ -10,9 +10,9 @@ namespace CSSTDModels
     public interface ICosmosDBSQLContext
     {
         string ConnectionString { get; set; }
-        Task CreateCollection();
-        List<ProductDocument> GetDocuments();
-        List<ProductDocument> GetDocuments( string industry);
-        Task UploadDocuments( List<ProductDocument> documents);
+        Task CreateCollection(string collectionName);
+        List<ProductDocument> GetDocuments(string collectionName);
+        List<ProductDocument> GetDocuments( string industry, string collectionName);
+        Task UploadDocuments( List<ProductDocument> documents, string collectionName);
     }
 }

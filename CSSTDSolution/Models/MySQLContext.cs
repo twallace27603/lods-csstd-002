@@ -15,7 +15,7 @@ namespace CSSTDSolution.Models
 
         public string ConnectionString { get; set; }
 
-        public void CreateTable()
+        public void CreateTable(string tableName)
         {
             string tableSQL = "CREATE TABLE vendors(ID INT, Name VARCHAR(100), Industry VARCHAR(100) );";
             string clearSQL = "DELETE FROM vendors;";
@@ -35,7 +35,7 @@ namespace CSSTDSolution.Models
             }
         }
 
-        public List<VendorData> GetData()
+        public List<VendorData> GetData(string tableName)
         {
             var result = new List<VendorData>();
             using (var conn = new MySqlConnection(this.ConnectionString))
@@ -60,9 +60,9 @@ namespace CSSTDSolution.Models
 
         }
 
-        public void LoadData(List<VendorData> vendors)
+        public void LoadData(List<VendorData> vendors, string tableName)
         {
-            CreateTable();
+            CreateTable(tableName);
             using (var conn = new MySqlConnection(this.ConnectionString))
             {
                 var sql = "INSERT INTO vendors(ID,Name,Industry) VALUES(@ID, @Name, @Industry);";

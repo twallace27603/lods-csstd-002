@@ -46,7 +46,7 @@
     <Compile Include="Context\IMySQLContext.cs" />
     <Compile Include="Context\ISQLServerContext.cs" />
     <Compile Include="Context\IStorageContext.cs" />
-    <Compile Include="ProductMentions.cs" />
+    <Compile Include="IProductMentions.cs" />
     <Compile Include="VendorData.cs" />
     <Compile Include="ProductDocument.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />

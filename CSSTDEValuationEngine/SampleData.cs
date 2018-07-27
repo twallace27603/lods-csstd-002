@@ -46,9 +46,9 @@ namespace CSSTDEvaluation
             return JsonConvert.DeserializeObject<List<ProductDocument>>(File.ReadAllText($"{dataFolder}\\Products.json"));
         }
 
-        public List<ProductMention> ProductMentionData()
+        public List<IProductMention> ProductMentionData()
         {
-            List<ProductMention> results = new List<ProductMention>();
+            List<IProductMention> results = new List<IProductMention>();
             string[] platforms = new string[] { "Twitter", "LinkedIn", "Reddit", "Instagram" };
             string[] mentions = new string[] {
                 "We just tried %product% and it was amazing #%industry%",
@@ -62,14 +62,14 @@ namespace CSSTDEvaluation
                 {
                     foreach (var mention in mentions)
                     {
-                        //results.Add(new ProductMention
-                        //{
-                        //    ID = Guid.NewGuid().ToString(),
-                        //    Mention = mention.Replace("%product%", product.Name).Replace("%industry%", product.Industry),
-                        //    MentionedAt = DateTime.Now.AddDays(-rnd.Next(1, 100)).AddMinutes(-rnd.Next(1200)),
-                        //    Platform = platform,
-                        //    Product = product.Name
-                        //});
+                        results.Add(new ProductMention
+                        {
+                            MentionID = Guid.NewGuid().ToString(),
+                            Mention = mention.Replace("%product%", product.Name).Replace("%industry%", product.Industry),
+                            MentionedAt = DateTime.Now.AddDays(-rnd.Next(1, 100)).AddMinutes(-rnd.Next(1200)).ToString(),
+                            Platform = platform,
+                            Product = product.Name
+                        });
                     }
                 }
             }
@@ -77,4 +77,12 @@ namespace CSSTDEvaluation
         }
     }
 
+    internal class ProductMention : IProductMention
+    {
+        public string MentionID { get; set; }
+        public string Mention { get; set; }
+        public string MentionedAt { get; set; }
+        public string Platform { get; set; }
+        public string Product { get; set; }
+    }
 }

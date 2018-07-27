@@ -10,9 +10,9 @@ namespace CSSTDModels
     public interface IMySQLContext
     {
         string ConnectionString { get; set; }
-        void CreateTable();
-        void LoadData(List<VendorData> vendors);
-        List<VendorData> GetData();
+        void CreateTable(string tableName);
+        void LoadData(List<VendorData> vendors, string tableName);
+        List<VendorData> GetData(string tableName);
 
     }
 
