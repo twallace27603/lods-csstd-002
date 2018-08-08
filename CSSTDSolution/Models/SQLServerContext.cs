@@ -1,8 +1,5 @@
 ﻿using CSSTDModels;
 using System.Collections.Generic;
-using System.ComponentModel.DataAnnotations;
-using System.ComponentModel.DataAnnotations.Schema;
-using System.Data.Entity;
 using System.Data.SqlClient;
 
 namespace CSSTDSolution.Models
@@ -67,10 +64,10 @@ namespace CSSTDSolution.Models
             {
                 using (var cmd = new SqlCommand(SQL, conn))
                 {
-                    conn.Open();
                     cmd.Parameters.Add(new SqlParameter("@ID", System.Data.SqlDbType.Int));
                     cmd.Parameters.Add(new SqlParameter("@Name", System.Data.SqlDbType.VarChar, 500));
                     cmd.Parameters.Add(new SqlParameter("@PostalCode", System.Data.SqlDbType.VarChar, 500));
+                    conn.Open();
                     foreach(var customer in customers)
                     {
                         cmd.Parameters["@ID"].Value = customer.ID;

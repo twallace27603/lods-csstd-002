@@ -1,8 +1,6 @@
 ﻿using CSSTDModels;
-using MySql.Data.Entity;
 using MySql.Data.MySqlClient;
 using System.Collections.Generic;
-using System.Data.Entity;
 
 namespace CSSTDSolution.Models
 {
@@ -17,19 +15,23 @@ namespace CSSTDSolution.Models
 
         public void CreateTable(string tableName)
         {
-            string tableSQL = "CREATE TABLE vendors(ID INT, Name VARCHAR(100), Industry VARCHAR(100) );";
-            string clearSQL = "DELETE FROM vendors;";
+            string tableSQL = $"CREATE TABLE {tableName}(ID INT, Name VARCHAR(100), Industry VARCHAR(100) );";
             using (var conn = new MySqlConnection(this.ConnectionString))
             {
                 conn.Open();
-                var cmd = new MySqlCommand(tableSQL, conn);
-                try
+                using (var cmd = new MySqlCommand(tableSQL, conn))
                 {
-                    cmd.ExecuteNonQuery();
+                    try
+                    {
+                        cmd.ExecuteNonQuery();
+                    }
+                    catch { }
                 }
-                catch { }
-                var cmdClear = new MySqlCommand(clearSQL, conn);
-                cmdClear.ExecuteNonQuery();
+                string clearSQL = $"DELETE FROM {tableName};";
+                using (var cmdClear = new MySqlCommand(clearSQL, conn))
+                {
+                    cmdClear.ExecuteNonQuery();
+                }
                 conn.Close();
 
             }
@@ -40,18 +42,20 @@ namespace CSSTDSolution.Models
             var result = new List<VendorData>();
             using (var conn = new MySqlConnection(this.ConnectionString))
             {
-                var SQL = "SELECT * FROM vendors;";
-                var cmd = new MySqlCommand(SQL, conn);
-                conn.Open();
-                var rdr = cmd.ExecuteReader();
-                while (rdr.Read())
+                var SQL = $"SELECT * FROM {tableName};";
+                using (var cmd = new MySqlCommand(SQL, conn))
                 {
-                    result.Add(new VendorData
+                    conn.Open();
+                    var rdr = cmd.ExecuteReader();
+                    while (rdr.Read())
                     {
-                        ID = (int)rdr["ID"],
-                        Industry = rdr["Industry"].ToString(),
-                        Name = rdr["Name"].ToString()
-                    });
+                        result.Add(new VendorData
+                        {
+                            ID = (int)rdr["ID"],
+                            Industry = rdr["Industry"].ToString(),
+                            Name = rdr["Name"].ToString()
+                        });
+                    }
                 }
                 conn.Close();
             }
@@ -63,20 +67,22 @@ namespace CSSTDSolution.Models
         public void LoadData(List<VendorData> vendors, string tableName)
         {
             CreateTable(tableName);
+            var sql = $"INSERT INTO {tableName}(ID,Name,Industry) VALUES(@ID, @Name, @Industry);";
             using (var conn = new MySqlConnection(this.ConnectionString))
             {
-                var sql = "INSERT INTO vendors(ID,Name,Industry) VALUES(@ID, @Name, @Industry);";
-                var cmd = new MySqlCommand(sql, conn);
-                cmd.Parameters.Add("@ID", MySqlDbType.Int32);
-                cmd.Parameters.Add("@Name", MySqlDbType.String);
-                cmd.Parameters.Add("@Industry", MySqlDbType.String);
-                conn.Open();
-                foreach (var vendor in vendors)
+                using (var cmd = new MySqlCommand(sql, conn))
                 {
-                    cmd.Parameters["@ID"].Value = vendor.ID;
-                    cmd.Parameters["@Name"].Value = vendor.Name;
-                    cmd.Parameters["@Industry"].Value = vendor.Industry;
-                    cmd.ExecuteNonQuery();
+                    cmd.Parameters.Add("@ID", MySqlDbType.Int32);
+                    cmd.Parameters.Add("@Name", MySqlDbType.String);
+                    cmd.Parameters.Add("@Industry", MySqlDbType.String);
+                    conn.Open();
+                    foreach (var vendor in vendors)
+                    {
+                        cmd.Parameters["@ID"].Value = vendor.ID;
+                        cmd.Parameters["@Name"].Value = vendor.Name;
+                        cmd.Parameters["@Industry"].Value = vendor.Industry;
+                        cmd.ExecuteNonQuery();
+                    }
                 }
                 conn.Close();
 
@@ -85,11 +91,4 @@ namespace CSSTDSolution.Models
         }
     }
 
-    [DbConfigurationType(typeof(MySqlEFConfiguration))]
-    public class MySQLDBContext : DbContext
-    {
-        public MySQLDBContext(string connectionString) : base(connectionString) { }
-        public DbSet<VendorData> Vendors { get; set; }
-
-    }
 }

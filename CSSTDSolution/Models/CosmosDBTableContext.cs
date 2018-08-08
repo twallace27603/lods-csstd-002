@@ -1,11 +1,11 @@
 ﻿using CSSTDModels;
 using Microsoft.Azure.CosmosDB.Table;
 using Microsoft.Azure.Storage;
+using CDB = Microsoft.Azure.CosmosDB;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-using CDB = Microsoft.Azure.CosmosDB;
 
 namespace CSSTDSolution.Models
 {
@@ -34,7 +34,7 @@ namespace CSSTDSolution.Models
         {
             var table = client.GetTableReference(tableName);
             var query = new TableQuery<ProductMention>();
-            return new List<IProductMention>(table.ExecuteQuery(query).ToList());
+            return new List<IProductMention>(table.ExecuteQuery(query));
 
 
         }

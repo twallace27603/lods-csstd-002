@@ -64,13 +64,15 @@ namespace CSSTDSolution.Models
 
         public async Task CreateCollection(string collectionName)
         {
-            var databaseID = databaseName;
-            var database = await client.CreateDatabaseIfNotExistsAsync(new Database { Id = databaseID });
+            var database = await client.CreateDatabaseIfNotExistsAsync(new Database { Id = databaseName });
             DocumentCollection collectionSpec = new DocumentCollection
             {
                 Id = collectionName
             };
-            DocumentCollection collection = await client.CreateDocumentCollectionIfNotExistsAsync(UriFactory.CreateDatabaseUri(databaseID), collectionSpec, new RequestOptions { OfferThroughput = 400 });
+            DocumentCollection collection = await client.CreateDocumentCollectionIfNotExistsAsync(
+                UriFactory.CreateDatabaseUri(databaseName), 
+                collectionSpec, 
+                new RequestOptions { OfferThroughput = 400 });
         }
 
         public List<ProductDocument> GetDocuments(string collectionName)
@@ -88,17 +90,15 @@ namespace CSSTDSolution.Models
             return query.ToList();
         }
 
-        public async Task UploadDocuments(List<ProductDocument> documents, string collectionName)
+        public  Task UploadDocuments(List<ProductDocument> documents, string collectionName)
         {
-            await CreateCollection(collectionName);
-            //           IQueryable<ProductDocument> query = client.CreateDocumentQuery<ProductDocument>(
-            //UriFactory.CreateDocumentCollectionUri(databaseName, collectionName));
-            //           if (query.Count<ProductDocument>() == 0)
-            //           {
+            //await CreateCollection(collectionName);
+
             //Load Documents
+            List<Task> tasks = new List<Task>();
             foreach (var document in documents)
             {
-                var t = Task.Run(async () =>
+                tasks.Add( Task.Run(async () =>
                 {
                     try
                     {
@@ -111,11 +111,27 @@ namespace CSSTDSolution.Models
                         System.Diagnostics.Trace.WriteLine(ex.ToString());
 
                     }
-                });
-                t.Wait();
+
+                }));
+                tasks.Add(Task.Run(async () =>
+                {
+                    try
+                    {
+                        var uri = UriFactory.CreateDocumentCollectionUri(databaseName, collectionName);
+                        var result = await client.UpsertDocumentAsync(uri, document);
+                        System.Diagnostics.Trace.WriteLine(result.StatusCode);
+                    }
+                    catch (Exception ex)
+                    {
+                        System.Diagnostics.Trace.WriteLine(ex.ToString());
+
+                    }
+                }));
                 //}
 
             }
+            Task.WaitAll(tasks.ToArray());
+            return Task.CompletedTask;
 
         }
     }

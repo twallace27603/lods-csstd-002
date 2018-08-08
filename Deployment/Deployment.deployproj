@@ -28,6 +28,7 @@
     <Content Include="CSVM.json" />
     <Content Include="CustomScripts\projectClone.ps1" />
     <Content Include="csvm.parameters.json" />
+    <None Include="CSSD.Policy.json" />
     <None Include="Deployment.targets">
       <Visible>False</Visible>
     </None>
