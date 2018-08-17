@@ -28,10 +28,11 @@
     "testWebName": "[concat('lods',parameters('LabInstanceId'))]",
     "testWebAspName": "testWeb-ASP",
     "mySqlDatabaseName": "vendors",
-    "mySqlVersion": "5.6",
-    "mySqlSkuTier": "GeneralPurpose",
+    "mySqlFamily": "Gen5",
+    "mySqlVersion": "5.7",
+    "mySqlSkuTier": "Basic",
     "mySqlSkuSize": "5120",
-    "mySqlSkuName": "GP_Gen4_2",
+    "mySqlSkuName": "B_Gen5_2",
     "mySqlDTU": "2",
     "adminPassword": "[concat('Azure!',parameters('Password'))]",
     "adminUser": "student",
@@ -180,7 +181,7 @@
         "tier": "[variables('mysqlSkuTier')]",
         "capacity": "[variables('mysqlDTU')]",
         "size": "[variables('mySqlSkuSize')]",
-        "family": "Gen4"
+        "family": "[variables('mySqlFamily')]"
       },
       "type": "Microsoft.DBforMySQL/servers",
       "resources": [
