@@ -1,6 +1,6 @@
 {
-    "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
-    "contentVersion": "1.0.0.0",
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
   "parameters": {
     "LabInstanceId": {
       "type": "string",
@@ -252,24 +252,43 @@
       "type": "Microsoft.DocumentDB/databaseAccounts",
       "kind": "GlobalDocumentDB",
       "name": "[variables('cosmosDbTableName')]",
-      "apiVersion": "2015-04-08",
+      "apiVersion": "2020-04-01",
       "location": "East US",
       "condition": "[variables('deployCDBTable')]",
       "tags": {
-        "defaultExperience": "Table",
-        "displayName": "Cosmos DB - Table API"
+        "defaultExperience": "Azure Table",
+        "hidden-cosmos-mmspecial": "",
+        "CosmosAccountType": "Non-Production"
       },
-      "scale": null,
       "properties": {
+        "publicNetworkAccess": "Enabled",
+        "enableAutomaticFailover": false,
+        "enableMultipleWriteLocations": false,
+        "isVirtualNetworkFilterEnabled": false,
+        "virtualNetworkRules": [],
+        "disableKeyBasedMetadataWriteAccess": false,
+        "enableFreeTier": false,
+        "enableAnalyticalStorage": false,
         "databaseAccountOfferType": "Standard",
         "consistencyPolicy": {
-          "defaultConsistencyLevel": "Session",
-          "maxIntervalInSeconds": 5,
-          "maxStalenessPrefix": 100
+          "defaultConsistencyLevel": "BoundedStaleness",
+          "maxIntervalInSeconds": 86400,
+          "maxStalenessPrefix": 1000000
         },
-        "name": "[variables('cosmosDbTableName')]"
-      },
-      "dependsOn": []
+        "locations": [
+          {
+            "locationName": "East US",
+            "failoverPriority": 0,
+            "isZoneRedundant": false
+          }
+        ],
+        "capabilities": [
+          {
+            "name": "EnableTable"
+          }
+        ],
+        "ipRules": []
+      }
     },
 
     /*  Test Web app ASP */

@@ -356,3 +356,5 @@ ASALocalRun/
 # MFractors (Xamarin productivity tool) working folder 
 .mfractor/
 
+Deployment/Cosmos-table.json
+Deployment/ExportedTemplate-testing.zip
